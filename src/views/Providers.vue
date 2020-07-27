@@ -172,7 +172,7 @@
     </v-expansion-panels>
     <vue-recaptcha
       ref="recaptcha"
-      sitekey="6LcZia0ZAAAAAJIfAAU6gZ_y3NuN3dTwWe_ZtZ_3"
+      :sitekey="recaptchaSiteKey"
       load-recaptcha-script
       size="invisible"
       @verify="onCaptchaVerify"
@@ -205,6 +205,10 @@
     regenerateLoading = new Array<string>();
 
     placeholderTokens = new Map<string, string>();
+
+    get recaptchaSiteKey () {
+      return process.env.VUE_APP_RECAPTCHA_SITEKEY;
+    }
 
     get providerItems () {
       return this.$typedStore.state.providers?.map(provider => {
