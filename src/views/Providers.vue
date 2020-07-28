@@ -1,13 +1,5 @@
 <template>
   <v-container class="console-providers-container console-container d-flex flex-column">
-    <v-btn
-      color="primary"
-      class="mb-8 align-self-center"
-      :loading="newProviderLoading"
-      @click="newProviderClick"
-    >
-      Create new provider
-    </v-btn>
     <v-alert
       class="mb-12"
       color="error"
@@ -24,129 +16,158 @@
       class="my-8 align-self-center"
       :size="64"
     />
-    <v-expansion-panels
-      v-else
-      multiple
-      hover
+    <div
+      v-else-if="providerItems.length === 0"
+      class="py-8 py-sm-16 text-center"
     >
-      <v-expansion-panel
-        v-for="provider in providerItems"
-        :key="provider.id"
+      <v-icon :size="96">
+        mdi-server
+      </v-icon>
+      <h4 class="text-h5 text--secondary mt-4">
+        You don't have any providers
+      </h4>
+      <v-btn
+        color="primary"
+        class="mt-12 align-self-center"
+        :loading="newProviderLoading"
+        large
+        @click="newProviderClick"
       >
-        <v-expansion-panel-header>
-          {{ provider.name }}
-        </v-expansion-panel-header>
-        <v-expansion-panel-content class="expansion-panel-content-remove-padding">
-          <div class="px-4 px-sm-6 pb-4">
-            <div class="d-flex">
-              <div class="grow">
-                <div class="text-overline">
-                  Name
+        Create new provider
+      </v-btn>
+    </div>
+    <template v-else>
+      <v-btn
+        color="primary"
+        class="mt-8 mb-14 align-self-center"
+        :loading="newProviderLoading"
+        @click="newProviderClick"
+      >
+        Create new provider
+      </v-btn>
+
+      <v-expansion-panels
+        multiple
+        hover
+      >
+        <v-expansion-panel
+          v-for="provider in providerItems"
+          :key="provider.id"
+        >
+          <v-expansion-panel-header>
+            {{ provider.name }}
+          </v-expansion-panel-header>
+          <v-expansion-panel-content class="expansion-panel-content-remove-padding">
+            <div class="px-4 px-sm-6 pb-4">
+              <div class="d-flex">
+                <div class="grow">
+                  <div class="text-overline">
+                    Name
+                  </div>
+                  <div
+                    class="text--secondary"
+                    v-text="provider.name"
+                  />
                 </div>
-                <div
-                  class="text--secondary"
-                  v-text="provider.name"
-                />
+                <provider-name-change-dialog
+                  :input="provider.name"
+                  :rename-provider="getRenameProviderFunction(provider.id)"
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      icon
+                      class="align-self-end ml-1"
+                      v-on="on"
+                    >
+                      <v-icon>
+                        mdi-pencil
+                      </v-icon>
+                    </v-btn>
+                  </template>
+                </provider-name-change-dialog>
               </div>
-              <provider-name-change-dialog
-                :input="provider.name"
-                :rename-provider="getRenameProviderFunction(provider.id)"
-              >
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    icon
-                    class="align-self-end ml-1"
-                    v-on="on"
-                  >
-                    <v-icon>
-                      mdi-pencil
-                    </v-icon>
-                  </v-btn>
-                </template>
-              </provider-name-change-dialog>
-            </div>
-            <div class="text-overline mt-2">
-              Creation time
-            </div>
-            <div
-              class="text--secondary"
-              v-text="provider.creationTimestampString"
-            />
-            <div class="text-overline mt-2">
-              Token
-            </div>
-            <v-sheet
-              outlined
-              rounded
-              class="d-flex align-center"
-            >
+              <div class="text-overline mt-2">
+                Creation time
+              </div>
               <div
-                class="token mx-3 text-no-wrap overflow-x-hidden text-truncate"
-                :class="{
-                  'blur': !provider.tokenRevealed,
-                }"
-                v-text="provider.tokenRevealed ? provider.token : provider.placeholderToken"
+                class="text--secondary"
+                v-text="provider.creationTimestampString"
               />
-              <v-spacer />
-              <v-divider vertical />
-              <v-btn
-                v-if="!provider.tokenRevealed"
-                icon
-                class="ma-1"
-                @click="revealToken(provider.id)"
+              <div class="text-overline mt-2">
+                Token
+              </div>
+              <v-sheet
+                outlined
+                rounded
+                class="d-flex align-center"
               >
-                <v-icon>
-                  mdi-eye
-                </v-icon>
-              </v-btn>
-              <v-btn
-                v-else
-                icon
-                class="ma-1"
-                @click="hideToken(provider.id)"
-              >
-                <v-icon>
-                  mdi-eye-off
-                </v-icon>
-              </v-btn>
-              <v-btn
-                icon
-                class="my-1 mr-1"
-                @click="copy(provider.token)"
-              >
-                <v-icon>
-                  mdi-content-copy
-                </v-icon>
-              </v-btn>
-              <v-btn
-                v-if="$vuetify.breakpoint.width < 700"
-                class="my-1 mr-1"
-                icon
-                color="red"
-                :loading="provider.regenerateLoading"
-                @click="resetProviderToken(provider.id)"
-              >
-                <v-icon>
-                  mdi-refresh
-                </v-icon>
-              </v-btn>
-              <template v-else>
+                <div
+                  class="token mx-3 text-no-wrap overflow-x-hidden text-truncate"
+                  :class="{
+                    'blur': !provider.tokenRevealed,
+                  }"
+                  v-text="provider.tokenRevealed ? provider.token : provider.placeholderToken"
+                />
+                <v-spacer />
                 <v-divider vertical />
                 <v-btn
+                  v-if="!provider.tokenRevealed"
+                  icon
                   class="ma-1"
-                  text
+                  @click="revealToken(provider.id)"
+                >
+                  <v-icon>
+                    mdi-eye
+                  </v-icon>
+                </v-btn>
+                <v-btn
+                  v-else
+                  icon
+                  class="ma-1"
+                  @click="hideToken(provider.id)"
+                >
+                  <v-icon>
+                    mdi-eye-off
+                  </v-icon>
+                </v-btn>
+                <v-btn
+                  icon
+                  class="my-1 mr-1"
+                  @click="copy(provider.token)"
+                >
+                  <v-icon>
+                    mdi-content-copy
+                  </v-icon>
+                </v-btn>
+                <v-btn
+                  v-if="$vuetify.breakpoint.width < 700"
+                  class="my-1 mr-1"
+                  icon
                   color="red"
                   :loading="provider.regenerateLoading"
                   @click="resetProviderToken(provider.id)"
                 >
-                  <v-icon left>
+                  <v-icon>
                     mdi-refresh
                   </v-icon>
-                  Regenerate
                 </v-btn>
-              </template>
-            </v-sheet>
-          </div>
+                <template v-else>
+                  <v-divider vertical />
+                  <v-btn
+                    class="ma-1"
+                    text
+                    color="red"
+                    :loading="provider.regenerateLoading"
+                    @click="resetProviderToken(provider.id)"
+                  >
+                    <v-icon left>
+                      mdi-refresh
+                    </v-icon>
+                    Regenerate
+                  </v-btn>
+                </template>
+              </v-sheet>
+            </div>
           <!--          <v-divider />-->
           <!--          <div class="px-4 px-sm-6 py-4 d-flex align-sm-center flex-column flex-sm-row">-->
           <!--            <div class="text&#45;&#45;secondary">-->
@@ -167,9 +188,10 @@
           <!--              </v-btn>-->
           <!--            </div>-->
           <!--          </div>-->
-        </v-expansion-panel-content>
-      </v-expansion-panel>
-    </v-expansion-panels>
+          </v-expansion-panel-content>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </template>
     <vue-recaptcha
       ref="recaptcha"
       :sitekey="recaptchaSiteKey"
